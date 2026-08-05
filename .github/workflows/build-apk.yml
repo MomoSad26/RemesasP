@@ -37,6 +37,14 @@ jobs:
           cp manifest.json app/src/main/assets/ 2>/dev/null || true
           cp -r icons app/src/main/assets/ 2>/dev/null || true
 
+      - name: Create gradle.properties (with AndroidX enabled)
+        run: |
+          cat > gradle.properties << 'EOF'
+          android.useAndroidX=true
+          android.enableJetifier=true
+          org.gradle.jvmargs=-Xmx2048m
+          EOF
+
       - name: Create AndroidManifest.xml
         run: |
           cat > app/src/main/AndroidManifest.xml << 'EOF'
