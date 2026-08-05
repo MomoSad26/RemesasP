@@ -24,6 +24,12 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
     
+    - name: Verificar Java
+      run: |
+        echo "✅ Java instalado:"
+        java -version
+        echo "✅ JAVA_HOME: $JAVA_HOME"
+    
     - name: Instalar Bubblewrap
       run: npm install -g @bubblewrap/cli
     
@@ -43,13 +49,8 @@ jobs:
           exit 1
         fi
         echo "✅ manifest.json existe"
-        
-        if [ ! -d "icons" ]; then
-          echo "⚠️  No existe carpeta icons, se creará una por defecto"
-          mkdir -p icons
-        fi
     
-    - name: Configurar Bubblewrap para offline
+    - name: Configurar Bubblewrap (sin preguntas interactivas)
       run: |
         cat > twa-manifest.json << 'EOF'
         {
@@ -79,13 +80,19 @@ jobs:
         }
         EOF
         
-        echo "✅ Configuración de Bubblewrap creada"
+        echo "✅ Configuración creada"
+        cat twa-manifest.json
     
-    - name: Generar APK con Bubblewrap
+    - name: Inicializar Bubblewrap (sin preguntas)
       run: |
-        bubblewrap init --manifest twa-manifest.json
+        # Forzamos a usar el JDK existente con --skip-install
+        bubblewrap init --manifest twa-manifest.json --skip-install
+        
+    - name: Construir APK
+      run: |
         bubblewrap build
         
+        # Buscar el APK generado
         if [ -f "app-release-unsigned.apk" ]; then
           cp app-release-unsigned.apk mi-app-offline.apk
           echo "✅ APK release generado"
