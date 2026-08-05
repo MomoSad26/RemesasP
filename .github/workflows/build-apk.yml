@@ -1,4 +1,4 @@
-name: Build APK Offline
+name: Build APK Offline con Bubblewrap
 
 on:
   push:
@@ -18,66 +18,94 @@ jobs:
       with:
         node-version: '18'
     
-    - name: Instalar herramientas
-      run: |
-        npm install -g pwa-to-apk
-        npm install -g http-server
+    - name: Setup Java (necesario para Android)
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
     
-    - name: Crear versión offline
+    - name: Instalar Bubblewrap
+      run: npm install -g @bubblewrap/cli
+    
+    - name: Verificar archivos locales
       run: |
-        # Asegurarnos de que todos los archivos están en el directorio correcto
-        mkdir -p app-assets
-        cp -r index.html app.js styles.css manifest.json app-assets/ 2>/dev/null || true
-        cp -r icons app-assets/ 2>/dev/null || true
+        echo "📁 Archivos en el repositorio:"
+        ls -la
         
-        # Crear un pequeño servidor local para los archivos
-        cd app-assets
-        cat > package.json << 'EOF'
+        if [ ! -f "index.html" ]; then
+          echo "❌ FALTA index.html"
+          exit 1
+        fi
+        echo "✅ index.html existe"
+        
+        if [ ! -f "manifest.json" ]; then
+          echo "❌ FALTA manifest.json"
+          exit 1
+        fi
+        echo "✅ manifest.json existe"
+        
+        if [ ! -d "icons" ]; then
+          echo "⚠️  No existe carpeta icons, se creará una por defecto"
+          mkdir -p icons
+        fi
+    
+    - name: Configurar Bubblewrap para offline
+      run: |
+        cat > twa-manifest.json << 'EOF'
         {
-          "name": "offline-app",
-          "version": "1.0.0",
-          "scripts": {
-            "start": "http-server -p 8080"
+          "name": "Mi App Offline",
+          "shortName": "MiApp",
+          "description": "Aplicación completamente offline",
+          "launchUrl": "https://localhost/index.html",
+          "startUrl": "/index.html",
+          "themeColor": "#000000",
+          "backgroundColor": "#ffffff",
+          "display": "standalone",
+          "orientation": "portrait",
+          "icons": [
+            {
+              "src": "icons/icon-512.png",
+              "sizes": "512x512",
+              "type": "image/png",
+              "purpose": "any"
+            }
+          ],
+          "signing": {
+            "keystorePath": "debug.keystore",
+            "keystorePassword": "android",
+            "keyAlias": "androiddebugkey",
+            "keyPassword": "android"
           }
         }
         EOF
         
-        # Crear un index.html que cargue los archivos locales
-        cat > index.html << 'EOF'
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>Mi App Offline</title>
-          <link rel="stylesheet" href="styles.css">
-          <link rel="manifest" href="manifest.json">
-        </head>
-        <body>
-          <div id="root"></div>
-          <script src="app.js"></script>
-        </body>
-        </html>
-        EOF
-        
-        echo "✅ Archivos preparados para app offline"
-        ls -la
+        echo "✅ Configuración de Bubblewrap creada"
     
-    - name: Generar APK con archivos locales
+    - name: Generar APK con Bubblewrap
       run: |
-        cd app-assets
-        # Usar pwa-to-apk con los archivos locales
-        npx pwa-to-apk . -o ../mi-app-offline.apk
+        bubblewrap init --manifest twa-manifest.json
+        bubblewrap build
         
+        if [ -f "app-release-unsigned.apk" ]; then
+          cp app-release-unsigned.apk mi-app-offline.apk
+          echo "✅ APK release generado"
+        elif [ -f "app-debug.apk" ]; then
+          cp app-debug.apk mi-app-offline.apk
+          echo "✅ APK debug generado"
+        else
+          echo "❌ No se encontró el APK"
+          find . -name "*.apk" -type f
+          exit 1
+        fi
+    
     - name: Verificar APK
       run: |
         if [ -f "mi-app-offline.apk" ]; then
           echo "✅ APK OFFLINE creado exitosamente"
-          echo "Tamaño:"
+          echo "📦 Tamaño:"
           ls -lh mi-app-offline.apk
         else
           echo "❌ No se generó el APK"
-          ls -la
           exit 1
         fi
     
