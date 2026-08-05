@@ -26,11 +26,7 @@ jobs:
         run: |
           mkdir -p app/src/main/assets
           mkdir -p app/src/main/java/com/miapp/offline
-          mkdir -p app/src/main/res/mipmap-hdpi
-          mkdir -p app/src/main/res/mipmap-mdpi
-          mkdir -p app/src/main/res/mipmap-xhdpi
-          mkdir -p app/src/main/res/mipmap-xxhdpi
-          mkdir -p app/src/main/res/mipmap-xxxhdpi
+          mkdir -p app/src/main/res/drawable
 
       - name: Copy web files to assets
         run: |
@@ -40,27 +36,14 @@ jobs:
           cp manifest.json app/src/main/assets/ 2>/dev/null || true
           cp -r icons app/src/main/assets/ 2>/dev/null || true
 
-      - name: Create simple app icon (PNG)
+      - name: Create placeholder icon
         run: |
-          # Crear un ícono simple de color azul con la letra "A"
-          # Usamos ImageMagick que viene preinstalado en Ubuntu
-          for size in 72 96 144 192 512; do
-            convert -size ${size}x${size} xc:#2196F3 \
-              -gravity center \
-              -pointsize $((size * 3 / 5)) \
-              -fill white \
-              -font Arial \
-              -annotate 0 "A" \
-              app/src/main/res/mipmap-xxxhdpi/ic_launcher.png 2>/dev/null || true
-          done
-          
-          # Copiar el ícono a todas las densidades
-          cp app/src/main/res/mipmap-xxxhdpi/ic_launcher.png app/src/main/res/mipmap-hdpi/
-          cp app/src/main/res/mipmap-xxxhdpi/ic_launcher.png app/src/main/res/mipmap-mdpi/
-          cp app/src/main/res/mipmap-xxxhdpi/ic_launcher.png app/src/main/res/mipmap-xhdpi/
-          cp app/src/main/res/mipmap-xxxhdpi/ic_launcher.png app/src/main/res/mipmap-xxhdpi/
-
-          echo "✅ Ícono creado"
+          echo '<?xml version="1.0" encoding="utf-8"?>
+          <shape xmlns:android="http://schemas.android.com/apk/res/android"
+              android:shape="rectangle">
+              <solid android:color="#2196F3" />
+              <corners android:radius="8dp" />
+          </shape>' > app/src/main/res/drawable/ic_launcher.xml
 
       - name: Create gradle.properties
         run: |
@@ -70,14 +53,14 @@ jobs:
           org.gradle.jvmargs=-Xmx2048m
           EOF
 
-      - name: Create AndroidManifest.xml (without package attribute)
+      - name: Create AndroidManifest.xml
         run: |
           cat > app/src/main/AndroidManifest.xml << 'EOF'
           <manifest xmlns:android="http://schemas.android.com/apk/res/android"
               xmlns:tools="http://schemas.android.com/tools">
               <application
                   android:allowBackup="true"
-                  android:icon="@mipmap/ic_launcher"
+                  android:icon="@drawable/ic_launcher"
                   android:label="Mi App Offline"
                   android:theme="@style/Theme.AppCompat.Light.NoActionBar"
                   tools:targetApi="31">
