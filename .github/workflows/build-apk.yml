@@ -13,30 +13,55 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
     
+    - name: Verificar archivos
+      run: |
+        echo "📁 Archivos en el repositorio:"
+        ls -la
+        
+        if [ ! -f "manifest.json" ]; then
+          echo "❌ FALTA manifest.json - ES OBLIGATORIO"
+          exit 1
+        fi
+        echo "✅ manifest.json existe"
+    
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
         node-version: '18'
     
-    - name: Install PWA2APK
-      run: npm install -g pwa2apk
+    - name: Instalar PWA2APK desde GitHub (CORREGIDO)
+      run: |
+        npm install -g https://github.com/apoelstra/pwa2apk.git
+        
+    - name: Crear configuración
+      run: |
+        cat > pwa-config.json << 'EOF'
+        {
+          "name": "Mi App Android",
+          "short_name": "MiApp",
+          "description": "Aplicación creada con GitHub Actions",
+          "start_url": "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/",
+          "display": "standalone",
+          "orientation": "portrait",
+          "background_color": "#ffffff",
+          "theme_color": "#000000",
+          "icons": [
+            {
+              "src": "icons/icon-512.png",
+              "sizes": "512x512",
+              "type": "image/png"
+            }
+          ]
+        }
+        EOF
+        echo "✅ Configuración creada"
     
     - name: Build APK
       run: |
-        pwa2apk \
-          --name "Mi App" \
-          --short-name "MiApp" \
-          --description "Mi aplicación Android" \
-          --start-url "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/" \
-          --display "standalone" \
-          --orientation "portrait" \
-          --background-color "#ffffff" \
-          --theme-color "#000000" \
-          --icon "icons/icon-512.png" \
-          --output "mi-app.apk"
+        pwa2apk --config pwa-config.json --output mi-app.apk
     
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
-        name: mi-app
+        name: mi-app-android
         path: mi-app.apk
