@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0F3D3E">
+<title>Remesas</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div id="toast" class="toast"></div>
+<div id="modal-root"></div>
+
+<header class="topbar">
+  <button id="btn-menu" class="icon-btn" aria-label="Menú">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+  </button>
+  <div class="topbar-title" id="topbar-title">Remesas</div>
+  <div class="topbar-spacer"></div>
+</header>
+
+<nav id="side-menu" class="side-menu">
+  <div class="side-menu-header">
+    <div class="brand-mark">₡</div>
+    <div>
+      <div class="brand-name">Remesas</div>
+      <div class="brand-sub">Control de envíos</div>
+    </div>
+  </div>
+  <ul class="menu-list">
+    <li><a href="#/clientes" data-view="clientes"><span class="mi">👤</span>Clientes</a></li>
+    <li><a href="#/envio" data-view="envio"><span class="mi">📤</span>Envío</a></li>
+    <li><a href="#/trabajadores" data-view="trabajadores"><span class="mi">👷</span>Trabajadores</a></li>
+    <li><a href="#/precio-especial" data-view="precio-especial"><span class="mi">⭐</span>Precio especial</a></li>
+    <li><a href="#/historial" data-view="historial"><span class="mi">📜</span>Historial de envíos</a></li>
+    <li><a href="#/compras" data-view="compras"><span class="mi">🛒</span>Compras</a></li>
+    <li><a href="#/ventas" data-view="ventas"><span class="mi">💱</span>Ventas</a></li>
+    <li><a href="#/gastos" data-view="gastos"><span class="mi">🧾</span>Gastos</a></li>
+    <li><a href="#/in-out" data-view="in-out"><span class="mi">🔄</span>In/Out</a></li>
+    <li><a href="#/balance" data-view="balance"><span class="mi">📊</span>Balance</a></li>
+    <li><a href="#/deudas" data-view="deudas"><span class="mi">🤝</span>Deudas</a></li>
+    <li><a href="#/respaldos" data-view="respaldos"><span class="mi">💾</span>Respaldos</a></li>
+  </ul>
+</nav>
+<div id="side-overlay" class="side-overlay"></div>
+
+<main id="app-content" class="app-content"></main>
+
+<script src="app.js"></script>
+</body>
+</html>
