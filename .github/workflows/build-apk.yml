@@ -1,4 +1,4 @@
-name: Build Offline APK with Android SDK
+name: Build Offline APK
 
 on:
   push:
@@ -22,11 +22,9 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Create Android project structure
+      - name: Create project structure
         run: |
           mkdir -p app/src/main/assets
-          mkdir -p app/src/main/res/drawable
-          mkdir -p app/src/main/res/values
           mkdir -p app/src/main/java/com/miapp/offline
 
       - name: Copy web files to assets
@@ -37,7 +35,7 @@ jobs:
           cp manifest.json app/src/main/assets/ 2>/dev/null || true
           cp -r icons app/src/main/assets/ 2>/dev/null || true
 
-      - name: Create gradle.properties (with AndroidX enabled)
+      - name: Create gradle.properties
         run: |
           cat > gradle.properties << 'EOF'
           android.useAndroidX=true
@@ -93,7 +91,7 @@ jobs:
           }
           EOF
 
-      - name: Create build.gradle (app)
+      - name: Create app/build.gradle
         run: |
           cat > app/build.gradle << 'EOF'
           apply plugin: 'com.android.application'
@@ -145,7 +143,7 @@ jobs:
           }
           EOF
 
-      - name: Create gradle wrapper
+      - name: Setup Gradle Wrapper
         run: |
           mkdir -p gradle/wrapper
           cat > gradle/wrapper/gradle-wrapper.properties << 'EOF'
@@ -158,19 +156,8 @@ jobs:
       - name: Build APK
         run: ./gradlew assembleRelease
 
-      - name: Find and rename APK
-        run: |
-          APK_PATH=$(find app/build/outputs/apk/release -name "*.apk" | head -n 1)
-          if [ -f "$APK_PATH" ]; then
-            cp "$APK_PATH" mi-app-offline.apk
-            echo "✅ APK found and renamed"
-          else
-            echo "❌ No APK found"
-            exit 1
-          fi
-
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: mi-app-offline
-          path: mi-app-offline.apk
+          path: app/build/outputs/apk/release/*.apk
