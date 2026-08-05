@@ -26,6 +26,11 @@ jobs:
         run: |
           mkdir -p app/src/main/assets
           mkdir -p app/src/main/java/com/miapp/offline
+          mkdir -p app/src/main/res/mipmap-hdpi
+          mkdir -p app/src/main/res/mipmap-mdpi
+          mkdir -p app/src/main/res/mipmap-xhdpi
+          mkdir -p app/src/main/res/mipmap-xxhdpi
+          mkdir -p app/src/main/res/mipmap-xxxhdpi
 
       - name: Copy web files to assets
         run: |
@@ -35,6 +40,28 @@ jobs:
           cp manifest.json app/src/main/assets/ 2>/dev/null || true
           cp -r icons app/src/main/assets/ 2>/dev/null || true
 
+      - name: Create simple app icon (PNG)
+        run: |
+          # Crear un ícono simple de color azul con la letra "A"
+          # Usamos ImageMagick que viene preinstalado en Ubuntu
+          for size in 72 96 144 192 512; do
+            convert -size ${size}x${size} xc:#2196F3 \
+              -gravity center \
+              -pointsize $((size * 3 / 5)) \
+              -fill white \
+              -font Arial \
+              -annotate 0 "A" \
+              app/src/main/res/mipmap-xxxhdpi/ic_launcher.png 2>/dev/null || true
+          done
+          
+          # Copiar el ícono a todas las densidades
+          cp app/src/main/res/mipmap-xxxhdpi/ic_launcher.png app/src/main/res/mipmap-hdpi/
+          cp app/src/main/res/mipmap-xxxhdpi/ic_launcher.png app/src/main/res/mipmap-mdpi/
+          cp app/src/main/res/mipmap-xxxhdpi/ic_launcher.png app/src/main/res/mipmap-xhdpi/
+          cp app/src/main/res/mipmap-xxxhdpi/ic_launcher.png app/src/main/res/mipmap-xxhdpi/
+
+          echo "✅ Ícono creado"
+
       - name: Create gradle.properties
         run: |
           cat > gradle.properties << 'EOF'
@@ -43,16 +70,17 @@ jobs:
           org.gradle.jvmargs=-Xmx2048m
           EOF
 
-      - name: Create AndroidManifest.xml
+      - name: Create AndroidManifest.xml (without package attribute)
         run: |
           cat > app/src/main/AndroidManifest.xml << 'EOF'
           <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-              package="com.miapp.offline">
+              xmlns:tools="http://schemas.android.com/tools">
               <application
                   android:allowBackup="true"
                   android:icon="@mipmap/ic_launcher"
                   android:label="Mi App Offline"
-                  android:theme="@style/Theme.AppCompat.Light.NoActionBar">
+                  android:theme="@style/Theme.AppCompat.Light.NoActionBar"
+                  tools:targetApi="31">
                   <activity android:name=".MainActivity"
                       android:exported="true">
                       <intent-filter>
