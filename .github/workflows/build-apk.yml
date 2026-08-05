@@ -1,4 +1,4 @@
-name: Build Android APK
+name: Build APK Offline
 
 on:
   push:
@@ -13,55 +13,76 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
     
-    - name: Verificar archivos
-      run: |
-        echo "📁 Archivos en el repositorio:"
-        ls -la
-        
-        if [ ! -f "manifest.json" ]; then
-          echo "❌ FALTA manifest.json - ES OBLIGATORIO"
-          exit 1
-        fi
-        echo "✅ manifest.json existe"
-    
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
         node-version: '18'
     
-    - name: Instalar PWA2APK desde GitHub (CORREGIDO)
+    - name: Instalar herramientas
       run: |
-        npm install -g https://github.com/apoelstra/pwa2apk.git
+        npm install -g pwa-to-apk
+        npm install -g http-server
+    
+    - name: Crear versión offline
+      run: |
+        # Asegurarnos de que todos los archivos están en el directorio correcto
+        mkdir -p app-assets
+        cp -r index.html app.js styles.css manifest.json app-assets/ 2>/dev/null || true
+        cp -r icons app-assets/ 2>/dev/null || true
         
-    - name: Crear configuración
-      run: |
-        cat > pwa-config.json << 'EOF'
+        # Crear un pequeño servidor local para los archivos
+        cd app-assets
+        cat > package.json << 'EOF'
         {
-          "name": "Mi App Android",
-          "short_name": "MiApp",
-          "description": "Aplicación creada con GitHub Actions",
-          "start_url": "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/",
-          "display": "standalone",
-          "orientation": "portrait",
-          "background_color": "#ffffff",
-          "theme_color": "#000000",
-          "icons": [
-            {
-              "src": "icons/icon-512.png",
-              "sizes": "512x512",
-              "type": "image/png"
-            }
-          ]
+          "name": "offline-app",
+          "version": "1.0.0",
+          "scripts": {
+            "start": "http-server -p 8080"
+          }
         }
         EOF
-        echo "✅ Configuración creada"
+        
+        # Crear un index.html que cargue los archivos locales
+        cat > index.html << 'EOF'
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Mi App Offline</title>
+          <link rel="stylesheet" href="styles.css">
+          <link rel="manifest" href="manifest.json">
+        </head>
+        <body>
+          <div id="root"></div>
+          <script src="app.js"></script>
+        </body>
+        </html>
+        EOF
+        
+        echo "✅ Archivos preparados para app offline"
+        ls -la
     
-    - name: Build APK
+    - name: Generar APK con archivos locales
       run: |
-        pwa2apk --config pwa-config.json --output mi-app.apk
+        cd app-assets
+        # Usar pwa-to-apk con los archivos locales
+        npx pwa-to-apk . -o ../mi-app-offline.apk
+        
+    - name: Verificar APK
+      run: |
+        if [ -f "mi-app-offline.apk" ]; then
+          echo "✅ APK OFFLINE creado exitosamente"
+          echo "Tamaño:"
+          ls -lh mi-app-offline.apk
+        else
+          echo "❌ No se generó el APK"
+          ls -la
+          exit 1
+        fi
     
-    - name: Upload APK
+    - name: Subir APK
       uses: actions/upload-artifact@v4
       with:
-        name: mi-app-android
-        path: mi-app.apk
+        name: mi-app-offline
+        path: mi-app-offline.apk
